@@ -18,6 +18,10 @@
   <!-- Lucide Icons -->
   <script src="https://unpkg.com/lucide@latest"></script>
 
+  <!-- Firebase SDK (v10 Compat) -->
+  <script src="https://www.gstatic.com/firebasejs/10.7.1/firebase-app-compat.js"></script>
+  <script src="https://www.gstatic.com/firebasejs/10.7.1/firebase-firestore-compat.js"></script>
+
   <!-- Google Fonts (Rubik) -->
   <link rel="preconnect" href="https://fonts.googleapis.com">
   <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
@@ -29,21 +33,6 @@
       background-color: #f8f6f2;
       color: #1e1e1e;
     }
-    .custom-scrollbar::-webkit-scrollbar {
-      width: 6px;
-      height: 6px;
-    }
-    .custom-scrollbar::-webkit-scrollbar-track {
-      background: #f1f1f1;
-      border-radius: 4px;
-    }
-    .custom-scrollbar::-webkit-scrollbar-thumb {
-      background: #c5a880;
-      border-radius: 4px;
-    }
-    .custom-scrollbar::-webkit-scrollbar-thumb:hover {
-      background: #a3845c;
-    }
   </style>
 </head>
 <body class="bg-[#f8f6f2] text-gray-900 antialiased selection:bg-[#c5a880] selection:text-white">
@@ -51,31 +40,30 @@
   <div id="root"></div>
 
   <script type="text/babel">
-    const { useState, useEffect, useMemo, useRef } = React;
+    const { useState, useEffect, useRef } = React;
 
-    // --- Lucide Icon Helper ---
-    const Icon = ({ name, className = "w-5 h-5", size, ...props }) => {
-      const iconRef = useRef(null);
-      useEffect(() => {
-        if (window.lucide && iconRef.current) {
-          iconRef.current.innerHTML = '';
-          const iconNode = window.lucide.icons[name];
-          if (iconNode) {
-            const svg = window.lucide.createIcons({
-              icons: { [name]: iconNode },
-              nameAttr: 'data-lucide'
-            });
-          }
-        }
-      }, [name]);
-      return <i ref={iconRef} data-lucide={name} class={className} {...props}></i>;
+    // ==========================================
+    // 🔑 מפתחות Firebase האמיתיים של הפרויקט שלך
+    // ==========================================
+    const firebaseConfig = {
+      apiKey: "AIzaSyD1hipTI4zkyMsqZGQILIoBpQMeRv50CmY",
+      authDomain: "meat-b2b.firebaseapp.com",
+      projectId: "meat-b2b",
+      storageBucket: "meat-b2b.firebasestorage.app",
+      messagingSenderId: "406715920434",
+      appId: "1:406715920434:web:644d6e6989f8d3530fcc2b"
     };
 
-    // --- INITIAL CLEAN DATA (PRODUCTION READY) ---
-    const INITIAL_LEADS = [];
-    const INITIAL_CUSTOMERS = [];
-    const INITIAL_ORDERS = [];
+    // אתחול Firebase
+    let db = null;
+    if (firebaseConfig.apiKey !== "YOUR_API_KEY") {
+      if (!firebase.apps.length) {
+        firebase.initializeApp(firebaseConfig);
+      }
+      db = firebase.firestore();
+    }
 
+    // --- INITIAL DATA FALLBACKS ---
     const INITIAL_KASHRUT_CERTS = [
       {
         id: 'cert_1',
@@ -117,53 +105,55 @@
         stockKg: 45,
         imageUrl: 'https://images.unsplash.com/photo-1558030006-450675393462?auto=format&fit=crop&w=600&q=80',
         description: 'נתח אנטריקוט משוייש בעל ארומה עשירה, מתאים לסטייקים וצליה.'
-      },
-      {
-        id: 'p3',
-        name: "צלעות טלה טריות",
-        category: 'טלה וכבש',
-        pricePerKg: 130,
-        isOnSale: true,
-        salePricePerKg: 110,
-        kashrutId: 'cert_1',
-        stockKg: 15,
-        imageUrl: 'https://images.unsplash.com/photo-1544025162-d76694265947?auto=format&fit=crop&w=600&q=80',
-        description: 'צלעות טלה טריות ואיכותיות עם שכבת שומן מעודנת.'
       }
     ];
 
-    // --- MAIN APP COMPONENT ---
     function App() {
-      const [leads, setLeads] = useState(() => {
-        const saved = localStorage.getItem('meat_b2b_v2_leads');
-        return saved ? JSON.parse(saved) : INITIAL_LEADS;
-      });
-
-      const [customers, setCustomers] = useState(() => {
-        const saved = localStorage.getItem('meat_b2b_v2_customers');
-        return saved ? JSON.parse(saved) : INITIAL_CUSTOMERS;
-      });
-
-      const [products, setProducts] = useState(() => {
-        const saved = localStorage.getItem('meat_b2b_v2_products');
-        return saved ? JSON.parse(saved) : INITIAL_PRODUCTS;
-      });
-
-      const [kashrutCerts, setKashrutCerts] = useState(() => {
-        const saved = localStorage.getItem('meat_b2b_v2_certs');
-        return saved ? JSON.parse(saved) : INITIAL_KASHRUT_CERTS;
-      });
-
-      const [orders, setOrders] = useState(() => {
-        const saved = localStorage.getItem('meat_b2b_v2_orders');
-        return saved ? JSON.parse(saved) : INITIAL_ORDERS;
-      });
+      const [leads, setLeads] = useState([]);
+      const [products, setProducts] = useState(INITIAL_PRODUCTS);
+      const [orders, setOrders] = useState([]);
+      const [kashrutCerts, setKashrutCerts] = useState(INITIAL_KASHRUT_CERTS);
+      const [cart, setCart] = useState([]);
 
       const [activeTab, setActiveTab] = useState('pipeline');
-      const [selectedCertForModal, setSelectedCertForModal] = useState(null);
-      const [selectedCustomerForFile, setSelectedCustomerForFile] = useState(null);
+      const [isFirebaseConnected, setIsFirebaseConnected] = useState(false);
 
-      // Check URL params for direct portal entry
+      // 1. סנכרון בזמן אמת מול Firebase
+      useEffect(() => {
+        if (!db) {
+          const savedLeads = localStorage.getItem('meat_b2b_leads');
+          if (savedLeads) setLeads(JSON.parse(savedLeads));
+          const savedOrders = localStorage.getItem('meat_b2b_orders');
+          if (savedOrders) setOrders(JSON.parse(savedOrders));
+          return;
+        }
+
+        setIsFirebaseConnected(true);
+
+        const unsubLeads = db.collection('leads').onSnapshot(snapshot => {
+          const leadsData = snapshot.docs.map(doc => ({ id: doc.id, ...doc.data() }));
+          setLeads(leadsData);
+        });
+
+        const unsubProducts = db.collection('products').onSnapshot(snapshot => {
+          if (!snapshot.empty) {
+            const productsData = snapshot.docs.map(doc => ({ id: doc.id, ...doc.data() }));
+            setProducts(productsData);
+          }
+        });
+
+        const unsubOrders = db.collection('orders').onSnapshot(snapshot => {
+          const ordersData = snapshot.docs.map(doc => ({ id: doc.id, ...doc.data() }));
+          setOrders(ordersData);
+        });
+
+        return () => {
+          unsubLeads();
+          unsubProducts();
+          unsubOrders();
+        };
+      }, []);
+
       useEffect(() => {
         const params = new URLSearchParams(window.location.search);
         if (params.get('portal') === 'true') {
@@ -171,19 +161,35 @@
         }
       }, []);
 
-      // Save states
-      useEffect(() => { localStorage.setItem('meat_b2b_v2_leads', JSON.stringify(leads)); }, [leads]);
-      useEffect(() => { localStorage.setItem('meat_b2b_v2_customers', JSON.stringify(customers)); }, [customers]);
-      useEffect(() => { localStorage.setItem('meat_b2b_v2_products', JSON.stringify(products)); }, [products]);
-      useEffect(() => { localStorage.setItem('meat_b2b_v2_certs', JSON.stringify(kashrutCerts)); }, [kashrutCerts]);
-      useEffect(() => { localStorage.setItem('meat_b2b_v2_orders', JSON.stringify(orders)); }, [orders]);
+      const handleAddLead = (name, phone, contactName) => {
+        const newLead = {
+          name,
+          phone,
+          contactName: contactName || 'איש קשר',
+          type: 'מסעדה / קצבייה',
+          status: 'new',
+          createdAt: new Date().toISOString()
+        };
 
-      // Move lead to pipeline status
-      const handleMoveLead = (leadId, newStatus) => {
-        setLeads(prev => prev.map(l => l.id === leadId ? { ...l, status: newStatus } : l));
+        if (db) {
+          db.collection('leads').add(newLead);
+        } else {
+          const updated = [{ id: 'lead_' + Date.now(), ...newLead }, ...leads];
+          setLeads(updated);
+          localStorage.setItem('meat_b2b_leads', JSON.stringify(updated));
+        }
       };
 
-      // Handle Portal WhatsApp Link Send
+      const handleMoveLead = (leadId, newStatus) => {
+        if (db) {
+          db.collection('leads').doc(leadId).update({ status: newStatus });
+        } else {
+          const updated = leads.map(l => l.id === leadId ? { ...l, status: newStatus } : l);
+          setLeads(updated);
+          localStorage.setItem('meat_b2b_leads', JSON.stringify(updated));
+        }
+      };
+
       const handleSendPortalLink = (lead) => {
         const portalUrl = window.location.origin + window.location.pathname + '?portal=true';
         const msg = encodeURIComponent(`שלום ${lead.contactName}, מצורף הקישור לפורטל ההזמנות הישיר של שווק בשר B2B: ${portalUrl}`);
@@ -191,9 +197,33 @@
         handleMoveLead(lead.id, 'contacted');
       };
 
+      const handleCreateOrder = (notes) => {
+        if (cart.length === 0) return;
+        
+        const totalAmount = cart.reduce((sum, item) => sum + ((item.isOnSale ? item.salePricePerKg : item.pricePerKg) * item.qtyKg), 0);
+        
+        const newOrder = {
+          items: cart,
+          totalAmount,
+          notes: notes || '',
+          status: 'pending',
+          createdAt: new Date().toISOString()
+        };
+
+        if (db) {
+          db.collection('orders').add(newOrder);
+        } else {
+          const updated = [{ id: 'order_' + Date.now(), ...newOrder }, ...orders];
+          setOrders(updated);
+          localStorage.setItem('meat_b2b_orders', JSON.stringify(updated));
+        }
+
+        setCart([]);
+        alert('ההזמנה נשלחה בהצלחה למשווק!');
+      };
+
       return (
         <div class="min-h-screen flex flex-col bg-[#f8f6f2]">
-          <!-- Header Navigation -->
           <header class="bg-white border-b border-stone-200 sticky top-0 z-40 shadow-sm">
             <div class="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8">
               <div class="flex justify-between h-16 items-center">
@@ -202,18 +232,30 @@
                     🥩
                   </div>
                   <div>
-                    <h1 class="text-lg font-bold text-stone-900 leading-tight">שווק בשר פרימיום B2B</h1>
+                    <div class="flex items-center gap-2">
+                      <h1 class="text-lg font-bold text-stone-900 leading-tight">שווק בשר פרימיום B2B</h1>
+                      {isFirebaseConnected ? (
+                        <span class="bg-emerald-100 text-emerald-800 text-[10px] font-bold px-2 py-0.5 rounded-full">⚡ Firebase פעיל</span>
+                      ) : (
+                        <span class="bg-amber-100 text-amber-800 text-[10px] font-bold px-2 py-0.5 rounded-full">💾 אחסון מקומי</span>
+                      )}
+                    </div>
                     <p class="text-xs text-amber-700 font-medium">מערכת ניהול ופורטל לקוחות עסקיים</p>
                   </div>
                 </div>
 
-                <!-- Navigation Tabs -->
                 <nav class="hidden md:flex items-center gap-1">
                   <button 
                     onClick={() => setActiveTab('pipeline')} 
                     class={`px-3 py-2 rounded-lg text-sm font-semibold transition ${activeTab === 'pipeline' ? 'bg-stone-900 text-white' : 'text-stone-600 hover:bg-stone-100'}`}
                   >
                     צנרת לידים
+                  </button>
+                  <button 
+                    onClick={() => setActiveTab('orders')} 
+                    class={`px-3 py-2 rounded-lg text-sm font-semibold transition ${activeTab === 'orders' ? 'bg-stone-900 text-white' : 'text-stone-600 hover:bg-stone-100'}`}
+                  >
+                    הזמנות נכנסות ({orders.length})
                   </button>
                   <button 
                     onClick={() => setActiveTab('catalog')} 
@@ -232,32 +274,20 @@
             </div>
           </header>
 
-          <!-- Main Content Body -->
           <main class="flex-1 max-w-7xl w-full mx-auto p-4 sm:p-6 lg:p-8">
             {activeTab === 'pipeline' && (
               <div>
                 <div class="flex justify-between items-center mb-6">
                   <div>
                     <h2 class="text-2xl font-bold text-stone-900">צנרת לידים ומכירות (Sales Pipeline)</h2>
-                    <p class="text-sm text-stone-500">מעקב וניהול לידים פוטנציאליים בזמן אמת</p>
+                    <p class="text-sm text-stone-500">מעקב וניהול לידים בזמן אמת</p>
                   </div>
                   <button 
                     onClick={() => {
                       const name = prompt('שם העסק / הלקוח החדש:');
                       const phone = prompt('מספר טלפון:');
                       const contactName = prompt('שם איש קשר:');
-                      if (name && phone) {
-                        const newLead = {
-                          id: 'lead_' + Date.now(),
-                          name,
-                          phone,
-                          contactName: contactName || 'איש קשר',
-                          type: 'מסעדה / קצבייה',
-                          city: 'מרכז',
-                          status: 'new'
-                        };
-                        setLeads(prev => [newLead, ...prev]);
-                      }
+                      if (name && phone) handleAddLead(name, phone, contactName);
                     }}
                     class="px-4 py-2 bg-red-700 text-white rounded-xl font-bold hover:bg-red-800 transition shadow"
                   >
@@ -268,11 +298,10 @@
                 {leads.length === 0 ? (
                   <div class="bg-white border-2 border-dashed border-stone-200 rounded-2xl p-12 text-center">
                     <p class="text-stone-500 font-medium text-lg">אין כרגע לידים במערכת.</p>
-                    <p class="text-stone-400 text-sm mt-1">לחצי על "+ הוסף ליד חדש" כדי להתחיל להזין לקוחות חדשים.</p>
+                    <p class="text-stone-400 text-sm mt-1">לחצי על "+ הוסף ליד חדש" כדי להתחיל להזין לקוחות.</p>
                   </div>
                 ) : (
                   <div class="grid grid-cols-1 md:grid-cols-3 gap-6">
-                    {/* Status Columns */}
                     {['new', 'contacted', 'active'].map((statusKey) => {
                       const titles = { new: '1. חדש', contacted: '2. נוצר קשר', active: '3. לקוח פעיל' };
                       const filteredLeads = leads.filter(l => l.status === statusKey);
@@ -311,6 +340,35 @@
               </div>
             )}
 
+            {activeTab === 'orders' && (
+              <div>
+                <h2 class="text-2xl font-bold text-stone-900 mb-6">הזמנות נכנסות בזמן אמת</h2>
+                {orders.length === 0 ? (
+                  <div class="bg-white border-2 border-dashed border-stone-200 rounded-2xl p-12 text-center text-stone-400">
+                    עדיין לא נתקבלו הזמנות בפורטל.
+                  </div>
+                ) : (
+                  <div class="space-y-4">
+                    {orders.map((order, idx) => (
+                      <div key={order.id || idx} class="bg-white rounded-2xl p-5 border border-stone-200 shadow-sm flex flex-col md:flex-row justify-between items-start md:items-center gap-4">
+                        <div>
+                          <div class="flex items-center gap-2">
+                            <span class="font-bold text-stone-900 text-lg">הזמנה #{order.id?.slice(-5) || idx + 1}</span>
+                            <span class="text-xs bg-amber-100 text-amber-800 font-bold px-2 py-0.5 rounded-full">ממתינה לליקוט</span>
+                          </div>
+                          <p class="text-xs text-stone-400 mt-1">תאריך: {new Date(order.createdAt).toLocaleString('he-IL')}</p>
+                          {order.notes && <p class="text-xs text-stone-600 italic mt-1">הערות: "{order.notes}"</p>}
+                        </div>
+                        <div class="text-left">
+                          <span class="text-xl font-black text-red-700">₪{order.totalAmount}</span>
+                        </div>
+                      </div>
+                    ))}
+                  </div>
+                )}
+              </div>
+            )}
+
             {activeTab === 'catalog' && (
               <div>
                 <h2 class="text-2xl font-bold text-stone-900 mb-6">ניהול קטלוג וכשרות</h2>
@@ -326,9 +384,6 @@
                             <span class="text-xl font-extrabold text-stone-900">₪{product.isOnSale ? product.salePricePerKg : product.pricePerKg}</span>
                             <span class="text-xs text-stone-500"> / ק"ג</span>
                           </div>
-                          <span class="text-xs font-semibold px-2 py-1 rounded bg-stone-100 border border-stone-200">
-                            מלאי: {product.stockKg} ק"ג
-                          </span>
                         </div>
                       </div>
                     </div>
@@ -339,39 +394,42 @@
 
             {activeTab === 'portal' && (
               <div class="space-y-6">
-                {/* Promotional Carousel */}
                 <div class="bg-gradient-to-r from-red-800 to-red-950 rounded-3xl p-6 text-white shadow-xl">
-                  <div class="flex items-center justify-between">
-                    <div>
-                      <span class="bg-amber-400 text-stone-950 font-black text-xs px-3 py-1 rounded-full uppercase tracking-wider">
-                        מבצעי השבוע מיוחדים
-                      </span>
-                      <h2 class="text-3xl font-extrabold mt-2">נתחי בקר פרימיום במחירי יבואן</h2>
-                      <p class="text-red-100 text-sm mt-1">אספקה קירור ישירה לעסק שלך עד 24 שעות</p>
-                    </div>
-                  </div>
+                  <span class="bg-amber-400 text-stone-950 font-black text-xs px-3 py-1 rounded-full uppercase tracking-wider">
+                    מבצעי השבוע מיוחדים
+                  </span>
+                  <h2 class="text-3xl font-extrabold mt-2">נתחי בקר פרימיום במחירי יבואן</h2>
+                  <p class="text-red-100 text-sm mt-1">אספקה בקירור ישירה לעסק שלך</p>
                 </div>
 
-                {/* Catalog & Sidebar Layout */}
                 <div class="grid grid-cols-1 lg:grid-cols-3 gap-8">
-                  {/* Products Grid */}
                   <div class="lg:col-span-2 space-y-4">
-                    <h3 class="text-xl font-bold text-stone-900">קטלוג נתחים זמינים אספקה מיידית</h3>
+                    <h3 class="text-xl font-bold text-stone-900">קטלוג נתחים זמינים</h3>
                     <div class="grid grid-cols-1 sm:grid-cols-2 gap-4">
                       {products.map(product => (
                         <div key={product.id} class="bg-white rounded-2xl p-4 border border-stone-200 shadow-sm flex flex-col justify-between">
                           <div>
                             <img src={product.imageUrl} class="w-full h-36 object-cover rounded-xl mb-3" />
                             <h4 class="font-bold text-stone-900">{product.name}</h4>
-                            <p class="text-xs text-stone-500 mt-1 line-clamp-2">{product.description}</p>
+                            <p class="text-xs text-stone-500 mt-1">{product.description}</p>
                           </div>
                           <div class="mt-4 pt-3 border-t border-stone-100 flex items-center justify-between">
                             <div>
                               <span class="text-lg font-bold text-red-700">₪{product.isOnSale ? product.salePricePerKg : product.pricePerKg}</span>
                               <span class="text-xs text-stone-500"> / ק"ג</span>
                             </div>
-                            <button class="bg-stone-900 text-white text-xs font-bold px-3 py-2 rounded-xl hover:bg-stone-800 transition">
-                              + הוסף לסל
+                            <button 
+                              onClick={() => {
+                                const exist = cart.find(c => c.id === product.id);
+                                if (exist) {
+                                  setCart(cart.map(c => c.id === product.id ? { ...c, qtyKg: c.qtyKg + 5 } : c));
+                                } else {
+                                  setCart([...cart, { ...product, qtyKg: 5 }]);
+                                }
+                              }}
+                              class="bg-stone-900 text-white text-xs font-bold px-3 py-2 rounded-xl hover:bg-stone-800 transition"
+                            >
+                              + הוסף 5 ק"ג לסל
                             </button>
                           </div>
                         </div>
@@ -379,16 +437,30 @@
                     </div>
                   </div>
 
-                  {/* Cart Sidebar */}
                   <div class="lg:col-span-1">
                     <div class="bg-white rounded-3xl p-5 border border-stone-200 shadow-md sticky top-20">
                       <h3 class="text-lg font-bold text-stone-900 mb-4 pb-2 border-b border-stone-100">🛒 סל הזמנות עסקי</h3>
-                      <div class="py-8 text-center text-stone-400 text-sm">
-                        הסל שלך ריק כרגע.
-                      </div>
-                      <button class="w-full bg-stone-300 text-stone-600 font-bold py-3 rounded-2xl text-sm cursor-not-allowed">
-                        שלח הזמנה למשווק
-                      </button>
+                      {cart.length === 0 ? (
+                        <div class="py-8 text-center text-stone-400 text-sm">הסל שלך ריק כרגע.</div>
+                      ) : (
+                        <div class="space-y-3 mb-4">
+                          {cart.map(item => (
+                            <div key={item.id} class="flex justify-between items-center text-sm border-b pb-2">
+                              <div>
+                                <div class="font-bold">{item.name}</div>
+                                <div class="text-xs text-stone-400">{item.qtyKg} ק"ג × ₪{item.isOnSale ? item.salePricePerKg : item.pricePerKg}</div>
+                              </div>
+                              <span class="font-extrabold text-stone-800">₪{(item.isOnSale ? item.salePricePerKg : item.pricePerKg) * item.qtyKg}</span>
+                            </div>
+                          ))}
+                          <button 
+                            onClick={() => handleCreateOrder('')}
+                            class="w-full bg-red-700 text-white font-bold py-3 rounded-2xl text-sm hover:bg-red-800 transition shadow"
+                          >
+                            שלח הזמנה למשווק
+                          </button>
+                        </div>
+                      )}
                     </div>
                   </div>
                 </div>
