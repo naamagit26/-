@@ -3,7 +3,7 @@
 <head>
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
-    <title>שווק בשר B2B - מערכת ניהול ופורטל לקוחות multi-tenant</title>
+    <title>שווק בשר B2B - מערכת ניהול ופורטל לקוחות</title>
     <!-- Tailwind CSS -->
     <script src="https://cdn.tailwindcss.com"></script>
     <script>
@@ -54,7 +54,7 @@
     <script type="text/babel">
         const { useState, useEffect, useMemo, useRef } = React;
 
-        // --- FIREBASE CONFIGURATION ---
+        // --- FIREBASE CONFIGURATION (BACKGROUND SYNC) ---
         const firebaseConfig = {
             apiKey: "AIzaSyD1hipTI4zkyMsqZGQILIoBpQMeRv50CmY",
             authDomain: "meat-b2b.firebaseapp.com",
@@ -91,8 +91,16 @@
                 'alert-triangle': <path strokeLinecap="round" strokeLinejoin="round" strokeWidth="2" d="M12 9v2m0 4h.01m-6.938 4h13.856c1.54 0 2.502-1.667 1.732-3L13.732 4c-.77-1.333-2.694-1.333-3.464 0L3.34 16c-.77 1.333.192 3 1.732 3z" />,
                 user: <path strokeLinecap="round" strokeLinejoin="round" strokeWidth="2" d="M16 7a4 4 0 11-8 0 4 4 0 018 0zM12 14a7 7 0 00-7 7h14a7 7 0 00-7-7z" />,
                 settings: <path strokeLinecap="round" strokeLinejoin="round" strokeWidth="2" d="M10.325 4.317c.426-1.756 2.924-1.756 3.35 0a1.724 1.724 0 002.573 1.066c1.543-.94 3.31.826 2.37 2.37a1.724 1.724 0 001.065 2.572c1.756.426 1.756 2.924 0 3.35a1.724 1.724 0 00-1.066 2.573c.94 1.543-.826 3.31-2.37 2.37a1.724 1.724 0 00-2.572 1.065c-.426 1.756-2.924 1.756-3.35 0a1.724 1.724 0 00-2.573-1.066c-1.543.94-3.31-.826-2.37-2.37a1.724 1.724 0 00-1.065-2.572c-1.756-.426-1.756-2.924 0-3.35a1.724 1.724 0 001.066-2.573c-.94-1.543.826-3.31 2.37-2.37.996.608 2.296.07 2.572-1.065z" />,
+                calendar: <path strokeLinecap="round" strokeLinejoin="round" strokeWidth="2" d="M8 7V3m8 4V3m-9 8h10M5 21h14a2 2 0 002-2V7a2 2 0 00-2-2H5a2 2 0 00-2 2v12a2 2 0 002 2z" />,
                 building: <path strokeLinecap="round" strokeLinejoin="round" strokeWidth="2" d="M19 21V5a2 2 0 00-2-2H7a2 2 0 00-2 2v16m14 0h2m-2 0h-5m-9 0H3m2 0h5M9 7h1m-1 4h1m4-4h1m-1 4h1m-5 10v-5a1 1 0 011-1h2a1 1 0 011 1v5m-4 0h4" />,
-                'log-out': <path strokeLinecap="round" strokeLinejoin="round" strokeWidth="2" d="M17 16l4-4m0 0l-4-4m4 4H7m6 4v1a3 3 0 01-3 3H6a3 3 0 01-3-3V7a3 3 0 013-3h4a3 3 0 013 3v1" />
+                'file-text': <path strokeLinecap="round" strokeLinejoin="round" strokeWidth="2" d="M9 12h6m-6 4h6m2 5H7a2 2 0 01-2-2V5a2 2 0 012-2h5.586a1 1 0 01.707.293l5.414 5.414a1 1 0 01.293.707V19a2 2 0 01-2 2z" />,
+                truck: <path strokeLinecap="round" strokeLinejoin="round" strokeWidth="2" d="M9 17a2 2 0 11-4 0 2 2 0 014 0zM19 17a2 2 0 11-4 0 2 2 0 014 0zM13 16V6a1 1 0 00-1-1H4a1 1 0 00-1 1v10a1 1 0 001 1h1m8-1a1 1 0 01-1 1H9m4-1h2.586a1 1 0 01.707.293l3.414 3.414a1 1 0 01.293.707V16" />,
+                tag: <path strokeLinecap="round" strokeLinejoin="round" strokeWidth="2" d="M7 7h.01M7 3h5c.512 0 1.024.195 1.414.586l7 7a2 2 0 010 2.828l-7 7a2 2 0 01-2.828 0l-7-7A1.994 1.994 0 013 12V7a4 4 0 014-4z" />,
+                'rotate-ccw': <path strokeLinecap="round" strokeLinejoin="round" strokeWidth="2" d="M4 4v5h.582m15.356 2A8.001 8.001 0 004.582 9m0 0H9m11 11v-5h-.581m0 0a8.003 8.003 0 01-15.357-2m15.357 2H15" />,
+                clock: <path strokeLinecap="round" strokeLinejoin="round" strokeWidth="2" d="M12 8v4l3 3m6-3a9 9 0 11-18 0 9 9 0 0118 0z" />,
+                'log-out': <path strokeLinecap="round" strokeLinejoin="round" strokeWidth="2" d="M17 16l4-4m0 0l-4-4m4 4H7m6 4v1a3 3 0 01-3 3H6a3 3 0 01-3-3V7a3 3 0 013-3h4a3 3 0 013 3v1" />,
+                'chevron-right': <path strokeLinecap="round" strokeLinejoin="round" strokeWidth="2" d="M9 5l7 7-7 7" />,
+                'chevron-left': <path strokeLinecap="round" strokeLinejoin="round" strokeWidth="2" d="M15 19l-7-7 7-7" />
             };
             return (
                 <svg className={className} fill="none" viewBox="0 0 24 24" stroke="currentColor">
@@ -109,69 +117,82 @@
 
         const INITIAL_USERS = [
             { id: 'u1', name: 'אבי כהן (מנהל ראשי)', role: 'gm', email: 'gm@meatb2b.co.il', phone: '0501234567' },
-            { id: 'u2', name: 'משה נציג מכירות', role: 'sales_rep', email: 'moshe@meatb2b.co.il', phone: '0522223333' }
+            { id: 'u2', name: 'משה נציג מכירות', role: 'sales_rep', email: 'moshe@meatb2b.co.il', phone: '0522223333' },
+            { id: 'u3', name: 'יוסי נהג חלוקה', role: 'driver', email: 'yossi@meatb2b.co.il', phone: '0544445555' }
         ];
 
         const INITIAL_PRODUCTS = [
-            { id: 'p1', name: 'כתף בקר מס 4 מיושן', cutNumber: '4', category: 'בקר טרי', pricePerKg: 78, salePricePerKg: 65, isOnSale: true, minOrderKg: 10, kosherName: 'בד"ץ העדה החרדית', imageUrl: 'https://images.unsplash.com/photo-1544025162-d76694265947?w=500&auto=format&fit=crop&q=80', stockKg: 150 },
-            { id: 'p2', name: 'אנטריקוט אנגוס פרימיום', cutNumber: '1', category: 'בקר טרי', pricePerKg: 145, salePricePerKg: 129, isOnSale: true, minOrderKg: 5, kosherName: 'בד"ץ בית יוסף', imageUrl: 'https://images.unsplash.com/photo-1603048588665-791ca8aea617?w=500&auto=format&fit=crop&q=80', stockKg: 18 }
+            { id: 'p1', name: 'כתף בקר מס 4 מיושן', cutNumber: '4', category: 'בקר טרי', pricePerKg: 78, salePricePerKg: 65, isOnSale: true, minOrderKg: 10, approxUnitWeightKg: 5, kosherName: 'בד"ץ העדה החרדית', imageUrl: 'https://images.unsplash.com/photo-1544025162-d76694265947?w=500&auto=format&fit=crop&q=80', stockKg: 150 },
+            { id: 'p2', name: 'אנטריקוט אנגוס פרימיום', cutNumber: '1', category: 'בקר טרי', pricePerKg: 145, salePricePerKg: 129, isOnSale: true, minOrderKg: 5, approxUnitWeightKg: 4, kosherName: 'בד"ץ בית יוסף', imageUrl: 'https://images.unsplash.com/photo-1603048588665-791ca8aea617?w=500&auto=format&fit=crop&q=80', stockKg: 18 },
+            { id: 'p3', name: 'צלעות טלה טרי', cutNumber: '12', category: 'טלה וכבש', pricePerKg: 120, salePricePerKg: 120, isOnSale: false, minOrderKg: 5, approxUnitWeightKg: 2.5, kosherName: 'רבנות מהדרין', imageUrl: 'https://images.unsplash.com/photo-1551024709-8f23befc6f87?w=500&auto=format&fit=crop&q=80', stockKg: 45 },
+            { id: 'p4', name: 'חזה עוף טרי מוכן לשיפוד', cutNumber: 'עוף', category: 'עוף והודו', pricePerKg: 34, salePricePerKg: 29, isOnSale: true, minOrderKg: 20, approxUnitWeightKg: 10, kosherName: 'בד"ץ העדה החרדית', imageUrl: 'https://images.unsplash.com/photo-1604503468506-a8da13d82791?w=500&auto=format&fit=crop&q=80', stockKg: 0 }
         ];
 
         const INITIAL_KASHRUT_CERTS = [
-            { id: 'k1', name: 'תעודת כשרות בד"ץ העדה החרדית', authority: 'בד"ץ העדה החרדית ירושלים', expiryDate: '2027-12-31', imageUrl: 'https://images.unsplash.com/photo-1584438784894-089d6a62b8fa?w=600&auto=format&fit=crop&q=80' }
+            { id: 'k1', name: 'תעודת כשרות בד"ץ העדה החרדית', authority: 'בד"ץ העדה החרדית ירושלים', expiryDate: '2027-12-31', imageUrl: 'https://images.unsplash.com/photo-1584438784894-089d6a62b8fa?w=600&auto=format&fit=crop&q=80' },
+            { id: 'k2', name: 'תעודת כשרות בד"ץ בית יוסף', authority: 'בד"ץ בית יוסף', expiryDate: '2027-10-30', imageUrl: 'https://images.unsplash.com/photo-1584438784894-089d6a62b8fa?w=600&auto=format&fit=crop&q=80' }
+        ];
+
+        const INITIAL_DRIVERS = [
+            { id: 'd1', name: 'יוסי כהן (משאית מרכז)', phone: '0544445555', vehicleNumber: '12-345-67' },
+            { id: 'd2', name: 'דני לוי (משאית צפון)', phone: '0528889999', vehicleNumber: '88-999-00' }
         ];
 
         const INITIAL_CUSTOMERS = [
-            { id: 'c1', businessName: 'מסעדת הבשרים הנשיאותית', taxId: '515432109', contactName: 'אבי נתן', phone: '0501112233', deliveryAddress: 'הרצל 45, תל אביב', region: 'מרכז', paymentTerms: 'שוטף+30', creditLimit: 50000, currentDebt: 12500, deliveryDays: "ב', ד', ה'", isNewCustomer: true }
+            { id: 'c1', businessName: 'מסעדת הבשרים הנשיאותית', taxId: '515432109', contactName: 'אבי נתן', phone: '0501112233', deliveryAddress: 'הרצל 45, תל אביב', region: 'מרכז', paymentTerms: 'שוטף+30', creditLimit: 50000, currentDebt: 12500, deliveryDays: "ב', ד', ה'", isNewCustomer: true, joinedDate: '2026-11-02', lastOrderDate: '2026-11-04' },
+            { id: 'c2', businessName: 'אולמי הדר הירוקה', taxId: '514987654', contactName: 'מירב גולן', phone: '0523334455', deliveryAddress: 'שדרות ירושלים 12, ראשון לציון', region: 'מרכז', paymentTerms: 'מזומן באספקה', creditLimit: 30000, currentDebt: 0, deliveryDays: "א', ג', ה'", isNewCustomer: false, joinedDate: '2025-05-10', lastOrderDate: '2026-09-15' }
         ];
 
         const INITIAL_LEADS = [
-            { id: 'l1', businessName: 'קצביית הגליל', businessType: 'קצבייה', contactName: 'יוסי', phone: '0547778899', region: 'צפון', city: 'חיפה', status: '1_new', notes: 'מתעניין בבקר טרי מיושן' }
+            { id: 'l1', businessName: 'קצביית הגליל', businessType: 'קצבייה', contactName: 'יוסי', phone: '0547778899', region: 'צפון', city: 'חיפה', status: '1_new', notes: 'מתעניין בבקר טרי מיושן' },
+            { id: 'l2', businessName: 'אולמי הדר', businessType: 'אולם אירועים', contactName: 'מירב', phone: '0523334455', region: 'מרכז', city: 'ראשון לציון', status: '2_contacted', linkSent: true, notes: 'נשלח קישור לפורטל הלקוחות' },
+            { id: 'l3', businessName: 'מסעדת האש', businessType: 'מסעדה', contactName: 'אבי', phone: '0501112233', region: 'מרכז', city: 'תל אביב', status: '3_active', linkSent: true, notes: 'התחבר למערכת וביצע הזמנה ראשונה' }
         ];
 
-        const INITIAL_ORDERS = [];
+        const INITIAL_ORDERS = [
+            { id: 'ORD-901', customerId: 'c1', customerName: 'מסעדת הבשרים הנשיאותית', orderDate: '2026-11-04', deliveryDate: '2026-11-06', status: 'בדרך אליך', driverId: 'd1', totalAmount: 3900, notes: 'להוריד במטבח האחורי', items: [{ name: 'כתף בקר מס 4 מיושן', weightKg: 50, pricePerKg: 65, total: 3250 }, { name: 'אנטריקוט אנגוס פרימיום', weightKg: 5, pricePerKg: 130, total: 650 }] }
+        ];
 
         // --- MAIN APP COMPONENT ---
         function App() {
             const [companies, setCompanies] = useState(() => JSON.parse(localStorage.getItem('meat_companies')) || INITIAL_COMPANIES);
             const [currentCompanyId, setCurrentCompanyId] = useState(() => localStorage.getItem('meat_current_company') || 'meat_b2b_default');
             
-            const [isAuthenticated, setIsAuthenticated] = useState(() => localStorage.getItem('meat_auth_logged') === 'true');
             const [users, setUsers] = useState(() => JSON.parse(localStorage.getItem('meat_users')) || INITIAL_USERS);
             const [currentUser, setCurrentUser] = useState(() => users[0]);
             
-            const [activeTab, setActiveTab] = useState('pipeline');
-            const [customers, setCustomers] = useState([]);
-            const [leads, setLeads] = useState([]);
-            const [products, setProducts] = useState(INITIAL_PRODUCTS);
-            const [kashrutCerts, setKashrutCerts] = useState(INITIAL_KASHRUT_CERTS);
-            const [orders, setOrders] = useState(INITIAL_ORDERS);
-            const [drivers, setDrivers] = useState([]);
+            const [activeTab, setActiveTab] = useState('pipeline'); // pipeline, customers, inactive, catalog, logistics, broadcast, staff, portal
+            const [customers, setCustomers] = useState(() => JSON.parse(localStorage.getItem('meat_customers')) || INITIAL_CUSTOMERS);
+            const [leads, setLeads] = useState(() => JSON.parse(localStorage.getItem('meat_leads')) || INITIAL_LEADS);
+            const [products, setProducts] = useState(() => JSON.parse(localStorage.getItem('meat_products')) || INITIAL_PRODUCTS);
+            const [kashrutCerts, setKashrutCerts] = useState(() => JSON.parse(localStorage.getItem('meat_kashrut')) || INITIAL_KASHRUT_CERTS);
+            const [orders, setOrders] = useState(() => JSON.parse(localStorage.getItem('meat_orders')) || INITIAL_ORDERS);
+            const [drivers, setDrivers] = useState(() => JSON.parse(localStorage.getItem('meat_drivers')) || INITIAL_DRIVERS);
 
             const [selectedCustomerId, setSelectedCustomerId] = useState(null);
             const [toastMessage, setToastMessage] = useState(null);
             const [settingsModalOpen, setSettingsModalOpen] = useState(false);
-            const [showAuthModal, setShowAuthModal] = useState(false);
+            const [showTenantModal, setShowTenantModal] = useState(false);
 
             const companySettings = useMemo(() => {
                 return companies.find(c => c.id === currentCompanyId) || companies[0];
             }, [companies, currentCompanyId]);
 
-            // Auto-detect dynamic portal link access from URL parameters (?company=COMPANY_ID&portal=true)
+            // Detect URL parameters for Portal or Company direct access
             useEffect(() => {
                 const urlParams = new URLSearchParams(window.location.search);
                 const compParam = urlParams.get('company');
                 if (compParam) {
                     setCurrentCompanyId(compParam);
                 }
-                if (urlParams.get('portal') === 'true' || window.location.hash === '#portal') {
+                if (urlParams.get('portal') === 'true' || window.location.hash === '#portal' || urlParams.get('view') === 'portal') {
                     setActiveTab('portal');
-                    setIsAuthenticated(true);
-                    setCurrentUser({ id: 'c_guest', name: 'לקוח עסקי', role: 'customer' });
+                    const customerUser = users.find(u => u.role === 'customer') || { id: 'c_guest', name: 'לקוח B2B', role: 'customer' };
+                    setCurrentUser(customerUser);
                 }
             }, []);
 
-            // Firebase Live Listener per Company (Scoped Multi-Tenancy)
+            // Firebase Live Data Listener per Company
             useEffect(() => {
                 if (!db || !currentCompanyId) return;
 
@@ -181,13 +202,13 @@
                     if (!snapshot.empty) setProducts(snapshot.docs.map(d => ({ id: d.id, ...d.data() })));
                 });
                 const unsubLeads = compRef.collection('leads').onSnapshot(snapshot => {
-                    setLeads(snapshot.docs.map(d => ({ id: d.id, ...d.data() })));
+                    if (!snapshot.empty) setLeads(snapshot.docs.map(d => ({ id: d.id, ...d.data() })));
                 });
                 const unsubCustomers = compRef.collection('customers').onSnapshot(snapshot => {
-                    setCustomers(snapshot.docs.map(d => ({ id: d.id, ...d.data() })));
+                    if (!snapshot.empty) setCustomers(snapshot.docs.map(d => ({ id: d.id, ...d.data() })));
                 });
                 const unsubOrders = compRef.collection('orders').onSnapshot(snapshot => {
-                    setOrders(snapshot.docs.map(d => ({ id: d.id, ...d.data() })));
+                    if (!snapshot.empty) setOrders(snapshot.docs.map(d => ({ id: d.id, ...d.data() })));
                 });
 
                 return () => {
@@ -198,9 +219,16 @@
                 };
             }, [currentCompanyId]);
 
-            // Persistence
+            // Save state to LocalStorage
             useEffect(() => { localStorage.setItem('meat_companies', JSON.stringify(companies)); }, [companies]);
             useEffect(() => { localStorage.setItem('meat_current_company', currentCompanyId); }, [currentCompanyId]);
+            useEffect(() => { localStorage.setItem('meat_users', JSON.stringify(users)); }, [users]);
+            useEffect(() => { localStorage.setItem('meat_customers', JSON.stringify(customers)); }, [customers]);
+            useEffect(() => { localStorage.setItem('meat_leads', JSON.stringify(leads)); }, [leads]);
+            useEffect(() => { localStorage.setItem('meat_products', JSON.stringify(products)); }, [products]);
+            useEffect(() => { localStorage.setItem('meat_kashrut', JSON.stringify(kashrutCerts)); }, [kashrutCerts]);
+            useEffect(() => { localStorage.setItem('meat_orders', JSON.stringify(orders)); }, [orders]);
+            useEffect(() => { localStorage.setItem('meat_drivers', JSON.stringify(drivers)); }, [drivers]);
 
             const showToast = (msg) => {
                 setToastMessage(msg);
@@ -228,15 +256,12 @@
                             <div className="flex items-center space-x-3 space-x-reverse">
                                 <img src={companySettings.logoUrl} alt="Logo" className="w-10 h-10 rounded-2xl object-cover border border-slate-200" />
                                 <div>
-                                    <div className="flex items-center space-x-2 space-x-reverse">
-                                        <h1 className="font-black text-slate-900 text-base leading-tight">{companySettings.companyName}</h1>
-                                        {db && <span className="text-[10px] bg-emerald-100 text-emerald-800 font-bold px-2 py-0.5 rounded-full">⚡ Firebase מחובר</span>}
-                                    </div>
-                                    <span className="text-[11px] font-bold text-wolt-600 bg-wolt-50 px-2 py-0.5 rounded-full">B2B Multi-Tenant Suite</span>
+                                    <h1 className="font-black text-slate-900 text-base leading-tight">{companySettings.companyName}</h1>
+                                    <span className="text-[11px] font-bold text-wolt-600 bg-wolt-50 px-2 py-0.5 rounded-full">B2B Executive System</span>
                                 </div>
                             </div>
 
-                            {/* TAB NAVIGATION */}
+                            {/* TAB NAVIGATION FOR STAFF */}
                             {currentUser.role !== 'customer' ? (
                                 <nav className="hidden lg:flex items-center space-x-1 space-x-reverse bg-slate-100 p-1.5 rounded-2xl text-xs font-bold">
                                     <button onClick={() => setActiveTab('pipeline')} className={`px-4 py-2 rounded-xl transition ${activeTab === 'pipeline' ? 'bg-white text-slate-900 shadow-sm font-black' : 'text-slate-600 hover:text-slate-900'}`}>צנרת לידים</button>
@@ -254,412 +279,22 @@
                                 <div className="font-bold text-slate-700 text-xs">שלום, {currentUser.name}</div>
                             )}
 
-                            {/* COMPANY & AUTH CONTROLS */}
                             <div className="flex items-center space-x-2 space-x-reverse">
-                                <button onClick={() => setShowAuthModal(true)} className="px-3 py-1.5 bg-slate-100 hover:bg-slate-200 text-slate-800 font-black rounded-xl text-xs flex items-center space-x-1 space-x-reverse">
+                                <button onClick={() => setShowTenantModal(true)} className="px-3 py-1.5 bg-slate-100 hover:bg-slate-200 text-slate-800 font-black rounded-xl text-xs flex items-center space-x-1 space-x-reverse">
                                     <Icon name="building" className="w-4 h-4 text-wolt-600" />
-                                    <span>החפֵף חברה / התחבר</span>
+                                    <span>החפֵף חברה</span>
                                 </button>
                                 {currentUser.role === 'gm' && (
                                     <button onClick={() => setSettingsModalOpen(true)} className="p-2 hover:bg-slate-100 rounded-full text-slate-600" title="הגדרות מותג">
                                         <Icon name="settings" className="w-5 h-5" />
                                     </button>
                                 )}
-                            </div>
-                        </div>
-                    </header>
-
-                    {/* TOAST MESSAGE */}
-                    {toastMessage && (
-                        <div className="fixed bottom-6 left-6 z-50 bg-slate-900 text-white px-5 py-3 rounded-2xl shadow-xl flex items-center space-x-2 space-x-reverse text-xs font-bold">
-                            <Icon name="check" className="w-4 h-4 text-emerald-400" />
-                            <span>{toastMessage}</span>
-                        </div>
-                    )}
-
-                    {/* MAIN CONTENT CONTAINER */}
-                    <main className="flex-1 max-w-7xl w-full mx-auto p-4 md:p-6 space-y-6">
-                        {activeTab === 'pipeline' && (
-                            <LeadsPipelineView 
-                                leads={leads} 
-                                setLeads={setLeads} 
-                                customers={customers}
-                                setCustomers={setCustomers}
-                                companySettings={companySettings}
-                                currentCompanyId={currentCompanyId}
-                                showToast={showToast}
-                                onOpenCustomerFile={(cust) => {
-                                    setSelectedCustomerId(cust.id);
-                                    setActiveTab('customers');
-                                }}
-                            />
-                        )}
-
-                        {activeTab === 'customers' && (
-                            <CustomerCRMView 
-                                customers={customers} 
-                                setCustomers={setCustomers} 
-                                selectedCustomerId={selectedCustomerId}
-                                setSelectedCustomerId={setSelectedCustomerId}
-                                orders={orders}
-                                products={products}
-                                companySettings={companySettings}
-                                showToast={showToast}
-                            />
-                        )}
-
-                        {activeTab === 'inactive' && (
-                            <InactiveCustomersView 
-                                customers={customers} 
-                                onOpenCustomerFile={(cust) => {
-                                    setSelectedCustomerId(cust.id);
-                                    setActiveTab('customers');
-                                }}
-                            />
-                        )}
-
-                        {activeTab === 'catalog' && (
-                            <CatalogManagementView 
-                                products={products}
-                                setProducts={setProducts}
-                                kashrutCerts={kashrutCerts}
-                                setKashrutCerts={setKashrutCerts}
-                                showToast={showToast}
-                            />
-                        )}
-
-                        {activeTab === 'logistics' && (
-                            <PicklistView 
-                                orders={orders}
-                                setOrders={setOrders}
-                                products={products}
-                                drivers={drivers}
-                                customers={customers}
-                                showToast={showToast}
-                            />
-                        )}
-
-                        {activeTab === 'broadcast' && (
-                            <RegionalBroadcastView 
-                                customers={customers}
-                                leads={leads}
-                                companySettings={companySettings}
-                                showToast={showToast}
-                            />
-                        )}
-
-                        {activeTab === 'staff' && (
-                            <StaffManagementView 
-                                users={users}
-                                setUsers={setUsers}
-                                showToast={showToast}
-                            />
-                        )}
-
-                        {activeTab === 'portal' && (
-                            <CustomerPortalView 
-                                products={products}
-                                kashrutCerts={kashrutCerts}
-                                orders={orders}
-                                setOrders={setOrders}
-                                currentUser={currentUser}
-                                companySettings={companySettings}
-                                customers={customers}
-                                setCustomers={setCustomers}
-                                drivers={drivers}
-                                showToast={showToast}
-                            />
-                        )}
-                    </main>
-
-                    {/* AUTH & MULTI-TENANT MODAL */}
-                    {showAuthModal && (
-                        <AuthTenantModal 
-                            companies={companies}
-                            currentCompanyId={currentCompanyId}
-                            onSelectCompany={handleCompanySelect}
-                            onCreateCompany={handleCreateNewCompany}
-                            onClose={() => setShowAuthModal(false)}
-                        />
-                    )}
-
-                    {/* SETTINGS MODAL */}
-                    {settingsModalOpen && (
-                        <SettingsModal 
-                            settings={companySettings}
-                            onSave={(newSettings) => {
-                                setCompanySettings(newSettings);
-                                setSettingsModalOpen(false);
-                                showToast('הגדרות המותג והחברה עודכנו בהצלחה!');
-                            }}
-                            onClose={() => setSettingsModalOpen(false)}
-                        />
-                    )}
-                </div>
-            );
-        }
-
-        // --- VIEW 1: SALES PIPELINE ---
-        function LeadsPipelineView({ leads, setLeads, customers, setCustomers, companySettings, currentCompanyId, showToast, onOpenCustomerFile }) {
-            const handleImportLeads = () => {
-                const sampleLeads = [
-                    { id: 'l_' + Date.now(), businessName: 'מסעדת ים תיכון', businessType: 'מסעדה', contactName: 'רונן', phone: '0549998877', region: 'מרכז', city: 'הרצליה', status: '1_new', notes: 'ייבוא אוטומטי מהרשת' }
-                ];
-                setLeads(prev => [...prev, ...sampleLeads]);
-                showToast('ליד חדש יובא בהצלחה לצינור המכירות!');
-            };
-
-            const handleSendPortalLink = (lead) => {
-                const updatedLeads = leads.map(l => l.id === lead.id ? { ...l, status: '2_contacted', linkSent: true } : l);
-                setLeads(updatedLeads);
-
-                const targetPhone = lead.phone.replace(/[^0-9]/g, '');
-                const livePortalUrl = window.location.href.split('?')[0].split('#')[0] + `?company=${currentCompanyId}&portal=true`;
-                const text = `היי ${lead.contactName}, מצורף קישור גישה אישי לפורטל ההזמנות הדיגיטלי של ${companySettings.companyName}. לצפייה בקטלוג וביצוע הזמנה:\n${livePortalUrl}`;
-                
-                window.open(`https://wa.me/972${targetPhone}?text=${encodeURIComponent(text)}`, '_blank');
-                showToast(`קישור פורטל פעיל נשלח ל-${lead.businessName}!`);
-            };
-
-            const stages = [
-                { id: '1_new', label: '1. כל הלידים החדשים', color: 'bg-amber-50 border-amber-200 text-amber-800' },
-                { id: '2_contacted', label: '2. נוצר קשר', color: 'bg-blue-50 border-blue-200 text-blue-800' },
-                { id: '3_active', label: '3. לקוח פעיל (התחבר למערכת)', color: 'bg-emerald-50 border-emerald-200 text-emerald-800' }
-            ];
-
-            return (
-                <div className="space-y-6 dir-rtl text-xs">
-                    <div className="flex flex-col sm:flex-row justify-between items-start sm:items-center gap-4 bg-white p-5 rounded-3xl border border-slate-200 shadow-sm">
-                        <div>
-                            <h2 className="text-xl font-black text-slate-900">צנרת לידים ומכירות (Sales Pipeline)</h2>
-                            <p className="text-slate-500 font-bold mt-0.5">מעקב וניהול לידים פוטנציאליים בחברה זו</p>
-                        </div>
-                        <button 
-                            onClick={handleImportLeads}
-                            className="bg-wolt-500 hover:bg-wolt-600 text-white font-black px-5 py-2.5 rounded-2xl shadow transition flex items-center space-x-2 space-x-reverse text-xs"
-                        >
-                            <Icon name="plus" className="w-4 h-4" />
-                            <span>ייבא ליד חדש</span>
-                        </button>
-                    </div>
-
-                    <div className="grid grid-cols-1 md:grid-cols-3 gap-5">
-                        {stages.map(stg => {
-                            const stageLeads = leads.filter(l => l.status === stg.id);
-                            return (
-                                <div key={stg.id} className="bg-slate-100 p-4 rounded-3xl border border-slate-200 flex flex-col min-h-[500px]">
-                                    <div className={`p-3 rounded-2xl border font-black flex justify-between items-center mb-4 ${stg.color}`}>
-                                        <span>{stg.label}</span>
-                                        <span className="bg-white/80 px-2.5 py-0.5 rounded-full text-xs font-mono">{stageLeads.length}</span>
-                                    </div>
-
-                                    <div className="space-y-3 flex-1 overflow-y-auto">
-                                        {stageLeads.map(lead => (
-                                            <div key={lead.id} className="bg-white p-4 rounded-2xl border border-slate-200 shadow-sm space-y-3">
-                                                <h4 className="font-black text-slate-900 text-sm">{lead.businessName}</h4>
-                                                <div className="text-slate-600 font-bold text-[11px]">איש קשר: {lead.contactName} • {lead.phone}</div>
-                                                <div className="flex items-center gap-2 pt-1 border-t border-slate-100">
-                                                    <button onClick={() => handleSendPortalLink(lead)} className="flex-1 bg-emerald-50 text-emerald-700 font-black py-1.5 px-3 rounded-xl flex items-center justify-center space-x-1 text-[11px]">
-                                                        <Icon name="whatsapp" className="w-3.5 h-3.5" />
-                                                        <span>שלח קישור פורטל</span>
-                                                    </button>
-                                                </div>
-                                            </div>
-                                        ))}
-                                    </div>
-                                </div>
-                            );
-                        })}
-                    </div>
-                </div>
-            );
-        }
-
-        // --- AUTH & MULTI-TENANT SELECTION MODAL ---
-        function AuthTenantModal({ companies, currentCompanyId, onSelectCompany, onCreateCompany, onClose }) {
-            const [newCompName, setNewCompName] = useState('');
-            const [newCompPhone, setNewCompPhone] = useState('');
-
-            return (
-                <div className="fixed inset-0 z-50 bg-slate-900/70 backdrop-blur-xs flex items-center justify-center p-4 dir-rtl text-xs">
-                    <div className="bg-white rounded-3xl max-w-lg w-full p-6 space-y-5 shadow-2xl relative">
-                        <button onClick={onClose} className="absolute top-4 left-4 p-2 bg-slate-100 hover:bg-slate-200 text-slate-700 rounded-full font-bold">✕</button>
-                        <div>
-                            <h3 className="font-black text-slate-900 text-lg">כניסת חברות וניהול Multi-Tenant</h3>
-                            <p className="text-slate-500 font-bold">בחרי חברה פעילה לעבודה או הקלידי חברה חדשה:</p>
-                        </div>
-
-                        <div className="space-y-3">
-                            <h4 className="font-black text-slate-800">חברות רשומות במערכת:</h4>
-                            <div className="space-y-2 max-h-48 overflow-y-auto">
-                                {companies.map(comp => (
-                                    <div 
-                                        key={comp.id} 
-                                        onClick={() => { onSelectCompany(comp.id); onClose(); }}
-                                        className={`p-3.5 rounded-2xl border flex justify-between items-center cursor-pointer transition ${currentCompanyId === comp.id ? 'bg-wolt-50 border-wolt-500 shadow-xs' : 'bg-slate-50 hover:bg-slate-100'}`}
-                                    >
-                                        <div className="flex items-center space-x-3 space-x-reverse">
-                                            <img src={comp.logoUrl} className="w-9 h-9 rounded-xl object-cover border" />
-                                            <div>
-                                                <div className="font-black text-slate-900">{comp.companyName}</div>
-                                                <div className="text-[10px] text-slate-400 font-mono">מזהה: {comp.id}</div>
-                                            </div>
-                                        </div>
-                                        {currentCompanyId === comp.id && <span className="text-xs bg-wolt-500 text-white font-bold px-2.5 py-0.5 rounded-full">פעיל כעת</span>}
-                                    </div>
-                                ))}
-                            </div>
-                        </div>
-
-                        <div className="border-t pt-4 space-y-3">
-                            <h4 className="font-black text-slate-800">+ הרשמת חברה חדשה (SaaS Tenant)</h4>
-                            <div className="grid grid-cols-2 gap-2">
-                                <input 
-                                    type="text" 
-                                    placeholder="שם החברה / העסק" 
-                                    value={newCompName} 
-                                    onChange={e => setNewCompName(e.target.value)} 
-                                    className="border p-2.5 rounded-xl font-bold text-xs" 
-                                />
-                                <input 
-                                    type="text" 
-                                    placeholder="טלפון WhatsApp עסקי" 
-                                    value={newCompPhone} 
-                                    onChange={e => setNewCompPhone(e.target.value)} 
-                                    className="border p-2.5 rounded-xl font-bold text-xs font-mono" 
-                                />
-                            </div>
-                            <button 
-                                onClick={() => {
-                                    if (newCompName) {
-                                        onCreateCompany(newCompName, newCompPhone || '0500000000');
-                                        onClose();
-                                    }
-                                }}
-                                className="w-full bg-wolt-500 hover:bg-wolt-600 text-white font-black py-2.5 rounded-xl text-xs shadow"
-                            >
-                                צור חברה חדשה במערכת
-                            </button>
-                        </div>
-                    </div>
-                </div>
-            );
-        }
-
-        // --- VIEW 2: CUSTOMER CRM ---
-        function CustomerCRMView({ customers, setCustomers, selectedCustomerId, setSelectedCustomerId, orders, products, companySettings, showToast }) {
-            const [searchTerm, setSearchTerm] = useState('');
-            const selectedCustomer = useMemo(() => customers.find(c => c.id === selectedCustomerId), [customers, selectedCustomerId]);
-            return (
-                <div className="space-y-6 dir-rtl text-xs">
-                    <div className="bg-white p-5 rounded-3xl border border-slate-200 shadow-sm">
-                        <h2 className="text-xl font-black text-slate-900">תיקי לקוחות 360°</h2>
-                        <p className="text-slate-500 font-bold mt-1">ניהול מסגרות אשראי והיסטוריית הזמנות</p>
-                    </div>
-                </div>
-            );
-        }
-
-        // --- VIEW 3: INACTIVE CUSTOMERS ---
-        function InactiveCustomersView({ customers, onOpenCustomerFile }) {
-            return (
-                <div className="bg-white p-5 rounded-3xl border border-slate-200 shadow-sm dir-rtl text-xs">
-                    <h2 className="text-xl font-black text-slate-900">לקוחות לא פעילים</h2>
-                    <p className="text-slate-500 font-bold mt-1">איתור לקוחות שלא ביצעו הזמנה ב-35 הימים האחרונים</p>
-                </div>
-            );
-        }
-
-        // --- VIEW 4: CATALOG & KASHRUT ---
-        function CatalogManagementView({ products, setProducts, kashrutCerts, setKashrutCerts, showToast }) {
-            return (
-                <div className="bg-white p-5 rounded-3xl border border-slate-200 shadow-sm dir-rtl text-xs">
-                    <h2 className="text-xl font-black text-slate-900">ניהול קטלוג וכשרות</h2>
-                    <p className="text-slate-500 font-bold mt-1">עריכת מחירי נתחים, מבצעים ותעודות כשרות</p>
-                </div>
-            );
-        }
-
-        // --- VIEW 5: LOGISTICS & PICKLIST ---
-        function PicklistView({ orders, setOrders, products, drivers, customers, showToast }) {
-            return (
-                <div className="bg-white p-5 rounded-3xl border border-slate-200 shadow-sm dir-rtl text-xs">
-                    <h2 className="text-xl font-black text-slate-900">לוגיסטיקה וליקוט</h2>
-                    <p className="text-slate-500 font-bold mt-1">דוחות ליקוט יומיים ושיוך נהגי חלוקה</p>
-                </div>
-            );
-        }
-
-        // --- VIEW 6: REGIONAL BROADCAST ---
-        function RegionalBroadcastView({ customers, leads, companySettings, showToast }) {
-            return (
-                <div className="bg-white p-5 rounded-3xl border border-slate-200 shadow-sm dir-rtl text-xs">
-                    <h2 className="text-xl font-black text-slate-900">הודעות תפוצה</h2>
-                    <p className="text-slate-500 font-bold mt-1">שליחת תזכורות מרוכזות ב-WhatsApp</p>
-                </div>
-            );
-        }
-
-        // --- VIEW 7: STAFF MANAGEMENT ---
-        function StaffManagementView({ users, setUsers, showToast }) {
-            return (
-                <div className="bg-white p-5 rounded-3xl border border-slate-200 shadow-sm dir-rtl text-xs">
-                    <h2 className="text-xl font-black text-slate-900">ניהול צוות עובדים</h2>
-                    <p className="text-slate-500 font-bold mt-1">שליטה בהרשאות גישה למשתמשים</p>
-                </div>
-            );
-        }
-
-        // --- VIEW 8: CUSTOMER PORTAL ---
-        function CustomerPortalView({ products, kashrutCerts, orders, setOrders, currentUser, companySettings, customers, setCustomers, drivers, showToast }) {
-            const [cart, setCart] = useState([]);
-            return (
-                <div className="space-y-6 dir-rtl text-xs">
-                    <div className="bg-gradient-to-r from-wolt-600 to-wolt-500 rounded-3xl p-6 text-white shadow-md">
-                        <h2 className="text-2xl font-black">פורטל הזמנות B2B - {companySettings.companyName}</h2>
-                        <p className="font-bold mt-1">הזמנת נתחי בקר פרימיום טריים ישירות מול החברה</p>
-                    </div>
-
-                    <div className="grid grid-cols-1 md:grid-cols-3 gap-6">
-                        {products.map(p => (
-                            <div key={p.id} className="bg-white p-4 rounded-3xl border border-slate-200 shadow-sm">
-                                <img src={p.imageUrl} className="w-full h-36 object-cover rounded-2xl mb-3" />
-                                <h4 className="font-black text-slate-900 text-sm">{p.name}</h4>
-                                <div className="mt-2 flex justify-between items-center">
-                                    <span className="font-mono font-black text-wolt-600">₪{p.isOnSale ? p.salePricePerKg : p.pricePerKg} / ק"ג</span>
-                                    <button onClick={() => showToast('מוצר נוסף לסל')} className="bg-wolt-500 text-white font-black px-3 py-1.5 rounded-xl">
-                                        + הוסף לסל
-                                    </button>
-                                </div>
-                            </div>
-                        ))}
-                    </div>
-                </div>
-            );
-        }
-
-        function SettingsModal({ settings, onSave, onClose }) {
-            const [companyName, setCompanyName] = useState(settings.companyName);
-            const [whatsappPhone, setWhatsappPhone] = useState(settings.whatsappPhone);
-            return (
-                <div className="fixed inset-0 z-50 bg-slate-900/70 backdrop-blur-xs flex items-center justify-center p-4 dir-rtl text-xs">
-                    <div className="bg-white rounded-3xl max-w-md w-full p-6 space-y-4 shadow-2xl relative">
-                        <button onClick={onClose} className="absolute top-4 left-4 p-2 bg-slate-100 hover:bg-slate-200 text-slate-700 rounded-full font-bold">✕</button>
-                        <h3 className="font-black text-slate-900 text-lg">הגדרות מותג וחברה</h3>
-                        <div className="space-y-3">
-                            <input type="text" value={companyName} onChange={e => setCompanyName(e.target.value)} className="w-full border p-2.5 rounded-xl font-bold" />
-                            <button onClick={() => { onSave({ ...settings, companyName }); }} className="w-full bg-wolt-500 text-white font-black py-2.5 rounded-xl">שמור שינויים</button>
-                        </div>
-                    </div>
-                </div>
-            );
-        }
-
-        // --- RENDER APPLICATION ---
-        const rootElement = document.getElementById('root');
-        if (rootElement) {
-            ReactDOM.createRoot(rootElement).render(<App />);
-        }
-    </script>
-</body>
-</html>
+                                <select 
+                                    value={currentUser.id} 
+                                    onChange={(e) => {
+                                        const u = users.find(x => x.id === e.target.value);
+                                        setCurrentUser(u);
+                                        if (u.role === 'customer') setActiveTab('portal');
+                                        else setActiveTab('pipeline');
+                                    }}
+                                    className="bg-slate-100 text-slate-900 font-bold text-xs p-2 rounded-xl
