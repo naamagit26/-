@@ -272,4 +272,394 @@
                     {/* TOAST MESSAGE */}
                     {toastMessage && (
                         <div className="fixed bottom-6 left-6 z-50 bg-slate-900 text-white px-5 py-3 rounded-2xl shadow-xl flex items-center space-x-2 space-x-reverse text-xs font-bold">
-                            <Icon name="check" className="w-4 h-4 text-emerald-40
+                            <Icon name="check" className="w-4 h-4 text-emerald-400" />
+                            <span>{toastMessage}</span>
+                        </div>
+                    )}
+
+                    {/* MAIN CONTENT CONTAINER */}
+                    <main className="flex-1 max-w-7xl w-full mx-auto p-4 md:p-6 space-y-6">
+                        {activeTab === 'pipeline' && (
+                            <LeadsPipelineView 
+                                leads={leads} 
+                                setLeads={setLeads} 
+                                customers={customers}
+                                setCustomers={setCustomers}
+                                companySettings={companySettings}
+                                currentCompanyId={currentCompanyId}
+                                showToast={showToast}
+                                onOpenCustomerFile={(cust) => {
+                                    setSelectedCustomerId(cust.id);
+                                    setActiveTab('customers');
+                                }}
+                            />
+                        )}
+
+                        {activeTab === 'customers' && (
+                            <CustomerCRMView 
+                                customers={customers} 
+                                setCustomers={setCustomers} 
+                                selectedCustomerId={selectedCustomerId}
+                                setSelectedCustomerId={setSelectedCustomerId}
+                                orders={orders}
+                                products={products}
+                                companySettings={companySettings}
+                                showToast={showToast}
+                            />
+                        )}
+
+                        {activeTab === 'inactive' && (
+                            <InactiveCustomersView 
+                                customers={customers} 
+                                onOpenCustomerFile={(cust) => {
+                                    setSelectedCustomerId(cust.id);
+                                    setActiveTab('customers');
+                                }}
+                            />
+                        )}
+
+                        {activeTab === 'catalog' && (
+                            <CatalogManagementView 
+                                products={products}
+                                setProducts={setProducts}
+                                kashrutCerts={kashrutCerts}
+                                setKashrutCerts={setKashrutCerts}
+                                showToast={showToast}
+                            />
+                        )}
+
+                        {activeTab === 'logistics' && (
+                            <PicklistView 
+                                orders={orders}
+                                setOrders={setOrders}
+                                products={products}
+                                drivers={drivers}
+                                customers={customers}
+                                showToast={showToast}
+                            />
+                        )}
+
+                        {activeTab === 'broadcast' && (
+                            <RegionalBroadcastView 
+                                customers={customers}
+                                leads={leads}
+                                companySettings={companySettings}
+                                showToast={showToast}
+                            />
+                        )}
+
+                        {activeTab === 'staff' && (
+                            <StaffManagementView 
+                                users={users}
+                                setUsers={setUsers}
+                                showToast={showToast}
+                            />
+                        )}
+
+                        {activeTab === 'portal' && (
+                            <CustomerPortalView 
+                                products={products}
+                                kashrutCerts={kashrutCerts}
+                                orders={orders}
+                                setOrders={setOrders}
+                                currentUser={currentUser}
+                                companySettings={companySettings}
+                                customers={customers}
+                                setCustomers={setCustomers}
+                                drivers={drivers}
+                                showToast={showToast}
+                            />
+                        )}
+                    </main>
+
+                    {/* AUTH & MULTI-TENANT MODAL */}
+                    {showAuthModal && (
+                        <AuthTenantModal 
+                            companies={companies}
+                            currentCompanyId={currentCompanyId}
+                            onSelectCompany={handleCompanySelect}
+                            onCreateCompany={handleCreateNewCompany}
+                            onClose={() => setShowAuthModal(false)}
+                        />
+                    )}
+
+                    {/* SETTINGS MODAL */}
+                    {settingsModalOpen && (
+                        <SettingsModal 
+                            settings={companySettings}
+                            onSave={(newSettings) => {
+                                setCompanySettings(newSettings);
+                                setSettingsModalOpen(false);
+                                showToast('הגדרות המותג והחברה עודכנו בהצלחה!');
+                            }}
+                            onClose={() => setSettingsModalOpen(false)}
+                        />
+                    )}
+                </div>
+            );
+        }
+
+        // --- VIEW 1: SALES PIPELINE ---
+        function LeadsPipelineView({ leads, setLeads, customers, setCustomers, companySettings, currentCompanyId, showToast, onOpenCustomerFile }) {
+            const handleImportLeads = () => {
+                const sampleLeads = [
+                    { id: 'l_' + Date.now(), businessName: 'מסעדת ים תיכון', businessType: 'מסעדה', contactName: 'רונן', phone: '0549998877', region: 'מרכז', city: 'הרצליה', status: '1_new', notes: 'ייבוא אוטומטי מהרשת' }
+                ];
+                setLeads(prev => [...prev, ...sampleLeads]);
+                showToast('ליד חדש יובא בהצלחה לצינור המכירות!');
+            };
+
+            const handleSendPortalLink = (lead) => {
+                const updatedLeads = leads.map(l => l.id === lead.id ? { ...l, status: '2_contacted', linkSent: true } : l);
+                setLeads(updatedLeads);
+
+                const targetPhone = lead.phone.replace(/[^0-9]/g, '');
+                const livePortalUrl = window.location.href.split('?')[0].split('#')[0] + `?company=${currentCompanyId}&portal=true`;
+                const text = `היי ${lead.contactName}, מצורף קישור גישה אישי לפורטל ההזמנות הדיגיטלי של ${companySettings.companyName}. לצפייה בקטלוג וביצוע הזמנה:\n${livePortalUrl}`;
+                
+                window.open(`https://wa.me/972${targetPhone}?text=${encodeURIComponent(text)}`, '_blank');
+                showToast(`קישור פורטל פעיל נשלח ל-${lead.businessName}!`);
+            };
+
+            const stages = [
+                { id: '1_new', label: '1. כל הלידים החדשים', color: 'bg-amber-50 border-amber-200 text-amber-800' },
+                { id: '2_contacted', label: '2. נוצר קשר', color: 'bg-blue-50 border-blue-200 text-blue-800' },
+                { id: '3_active', label: '3. לקוח פעיל (התחבר למערכת)', color: 'bg-emerald-50 border-emerald-200 text-emerald-800' }
+            ];
+
+            return (
+                <div className="space-y-6 dir-rtl text-xs">
+                    <div className="flex flex-col sm:flex-row justify-between items-start sm:items-center gap-4 bg-white p-5 rounded-3xl border border-slate-200 shadow-sm">
+                        <div>
+                            <h2 className="text-xl font-black text-slate-900">צנרת לידים ומכירות (Sales Pipeline)</h2>
+                            <p className="text-slate-500 font-bold mt-0.5">מעקב וניהול לידים פוטנציאליים בחברה זו</p>
+                        </div>
+                        <button 
+                            onClick={handleImportLeads}
+                            className="bg-wolt-500 hover:bg-wolt-600 text-white font-black px-5 py-2.5 rounded-2xl shadow transition flex items-center space-x-2 space-x-reverse text-xs"
+                        >
+                            <Icon name="plus" className="w-4 h-4" />
+                            <span>ייבא ליד חדש</span>
+                        </button>
+                    </div>
+
+                    <div className="grid grid-cols-1 md:grid-cols-3 gap-5">
+                        {stages.map(stg => {
+                            const stageLeads = leads.filter(l => l.status === stg.id);
+                            return (
+                                <div key={stg.id} className="bg-slate-100 p-4 rounded-3xl border border-slate-200 flex flex-col min-h-[500px]">
+                                    <div className={`p-3 rounded-2xl border font-black flex justify-between items-center mb-4 ${stg.color}`}>
+                                        <span>{stg.label}</span>
+                                        <span className="bg-white/80 px-2.5 py-0.5 rounded-full text-xs font-mono">{stageLeads.length}</span>
+                                    </div>
+
+                                    <div className="space-y-3 flex-1 overflow-y-auto">
+                                        {stageLeads.map(lead => (
+                                            <div key={lead.id} className="bg-white p-4 rounded-2xl border border-slate-200 shadow-sm space-y-3">
+                                                <h4 className="font-black text-slate-900 text-sm">{lead.businessName}</h4>
+                                                <div className="text-slate-600 font-bold text-[11px]">איש קשר: {lead.contactName} • {lead.phone}</div>
+                                                <div className="flex items-center gap-2 pt-1 border-t border-slate-100">
+                                                    <button onClick={() => handleSendPortalLink(lead)} className="flex-1 bg-emerald-50 text-emerald-700 font-black py-1.5 px-3 rounded-xl flex items-center justify-center space-x-1 text-[11px]">
+                                                        <Icon name="whatsapp" className="w-3.5 h-3.5" />
+                                                        <span>שלח קישור פורטל</span>
+                                                    </button>
+                                                </div>
+                                            </div>
+                                        ))}
+                                    </div>
+                                </div>
+                            );
+                        })}
+                    </div>
+                </div>
+            );
+        }
+
+        // --- AUTH & MULTI-TENANT SELECTION MODAL ---
+        function AuthTenantModal({ companies, currentCompanyId, onSelectCompany, onCreateCompany, onClose }) {
+            const [newCompName, setNewCompName] = useState('');
+            const [newCompPhone, setNewCompPhone] = useState('');
+
+            return (
+                <div className="fixed inset-0 z-50 bg-slate-900/70 backdrop-blur-xs flex items-center justify-center p-4 dir-rtl text-xs">
+                    <div className="bg-white rounded-3xl max-w-lg w-full p-6 space-y-5 shadow-2xl relative">
+                        <button onClick={onClose} className="absolute top-4 left-4 p-2 bg-slate-100 hover:bg-slate-200 text-slate-700 rounded-full font-bold">✕</button>
+                        <div>
+                            <h3 className="font-black text-slate-900 text-lg">כניסת חברות וניהול Multi-Tenant</h3>
+                            <p className="text-slate-500 font-bold">בחרי חברה פעילה לעבודה או הקלידי חברה חדשה:</p>
+                        </div>
+
+                        <div className="space-y-3">
+                            <h4 className="font-black text-slate-800">חברות רשומות במערכת:</h4>
+                            <div className="space-y-2 max-h-48 overflow-y-auto">
+                                {companies.map(comp => (
+                                    <div 
+                                        key={comp.id} 
+                                        onClick={() => { onSelectCompany(comp.id); onClose(); }}
+                                        className={`p-3.5 rounded-2xl border flex justify-between items-center cursor-pointer transition ${currentCompanyId === comp.id ? 'bg-wolt-50 border-wolt-500 shadow-xs' : 'bg-slate-50 hover:bg-slate-100'}`}
+                                    >
+                                        <div className="flex items-center space-x-3 space-x-reverse">
+                                            <img src={comp.logoUrl} className="w-9 h-9 rounded-xl object-cover border" />
+                                            <div>
+                                                <div className="font-black text-slate-900">{comp.companyName}</div>
+                                                <div className="text-[10px] text-slate-400 font-mono">מזהה: {comp.id}</div>
+                                            </div>
+                                        </div>
+                                        {currentCompanyId === comp.id && <span className="text-xs bg-wolt-500 text-white font-bold px-2.5 py-0.5 rounded-full">פעיל כעת</span>}
+                                    </div>
+                                ))}
+                            </div>
+                        </div>
+
+                        <div className="border-t pt-4 space-y-3">
+                            <h4 className="font-black text-slate-800">+ הרשמת חברה חדשה (SaaS Tenant)</h4>
+                            <div className="grid grid-cols-2 gap-2">
+                                <input 
+                                    type="text" 
+                                    placeholder="שם החברה / העסק" 
+                                    value={newCompName} 
+                                    onChange={e => setNewCompName(e.target.value)} 
+                                    className="border p-2.5 rounded-xl font-bold text-xs" 
+                                />
+                                <input 
+                                    type="text" 
+                                    placeholder="טלפון WhatsApp עסקי" 
+                                    value={newCompPhone} 
+                                    onChange={e => setNewCompPhone(e.target.value)} 
+                                    className="border p-2.5 rounded-xl font-bold text-xs font-mono" 
+                                />
+                            </div>
+                            <button 
+                                onClick={() => {
+                                    if (newCompName) {
+                                        onCreateCompany(newCompName, newCompPhone || '0500000000');
+                                        onClose();
+                                    }
+                                }}
+                                className="w-full bg-wolt-500 hover:bg-wolt-600 text-white font-black py-2.5 rounded-xl text-xs shadow"
+                            >
+                                צור חברה חדשה במערכת
+                            </button>
+                        </div>
+                    </div>
+                </div>
+            );
+        }
+
+        // --- VIEW 2: CUSTOMER CRM ---
+        function CustomerCRMView({ customers, setCustomers, selectedCustomerId, setSelectedCustomerId, orders, products, companySettings, showToast }) {
+            const [searchTerm, setSearchTerm] = useState('');
+            const selectedCustomer = useMemo(() => customers.find(c => c.id === selectedCustomerId), [customers, selectedCustomerId]);
+            return (
+                <div className="space-y-6 dir-rtl text-xs">
+                    <div className="bg-white p-5 rounded-3xl border border-slate-200 shadow-sm">
+                        <h2 className="text-xl font-black text-slate-900">תיקי לקוחות 360°</h2>
+                        <p className="text-slate-500 font-bold mt-1">ניהול מסגרות אשראי והיסטוריית הזמנות</p>
+                    </div>
+                </div>
+            );
+        }
+
+        // --- VIEW 3: INACTIVE CUSTOMERS ---
+        function InactiveCustomersView({ customers, onOpenCustomerFile }) {
+            return (
+                <div className="bg-white p-5 rounded-3xl border border-slate-200 shadow-sm dir-rtl text-xs">
+                    <h2 className="text-xl font-black text-slate-900">לקוחות לא פעילים</h2>
+                    <p className="text-slate-500 font-bold mt-1">איתור לקוחות שלא ביצעו הזמנה ב-35 הימים האחרונים</p>
+                </div>
+            );
+        }
+
+        // --- VIEW 4: CATALOG & KASHRUT ---
+        function CatalogManagementView({ products, setProducts, kashrutCerts, setKashrutCerts, showToast }) {
+            return (
+                <div className="bg-white p-5 rounded-3xl border border-slate-200 shadow-sm dir-rtl text-xs">
+                    <h2 className="text-xl font-black text-slate-900">ניהול קטלוג וכשרות</h2>
+                    <p className="text-slate-500 font-bold mt-1">עריכת מחירי נתחים, מבצעים ותעודות כשרות</p>
+                </div>
+            );
+        }
+
+        // --- VIEW 5: LOGISTICS & PICKLIST ---
+        function PicklistView({ orders, setOrders, products, drivers, customers, showToast }) {
+            return (
+                <div className="bg-white p-5 rounded-3xl border border-slate-200 shadow-sm dir-rtl text-xs">
+                    <h2 className="text-xl font-black text-slate-900">לוגיסטיקה וליקוט</h2>
+                    <p className="text-slate-500 font-bold mt-1">דוחות ליקוט יומיים ושיוך נהגי חלוקה</p>
+                </div>
+            );
+        }
+
+        // --- VIEW 6: REGIONAL BROADCAST ---
+        function RegionalBroadcastView({ customers, leads, companySettings, showToast }) {
+            return (
+                <div className="bg-white p-5 rounded-3xl border border-slate-200 shadow-sm dir-rtl text-xs">
+                    <h2 className="text-xl font-black text-slate-900">הודעות תפוצה</h2>
+                    <p className="text-slate-500 font-bold mt-1">שליחת תזכורות מרוכזות ב-WhatsApp</p>
+                </div>
+            );
+        }
+
+        // --- VIEW 7: STAFF MANAGEMENT ---
+        function StaffManagementView({ users, setUsers, showToast }) {
+            return (
+                <div className="bg-white p-5 rounded-3xl border border-slate-200 shadow-sm dir-rtl text-xs">
+                    <h2 className="text-xl font-black text-slate-900">ניהול צוות עובדים</h2>
+                    <p className="text-slate-500 font-bold mt-1">שליטה בהרשאות גישה למשתמשים</p>
+                </div>
+            );
+        }
+
+        // --- VIEW 8: CUSTOMER PORTAL ---
+        function CustomerPortalView({ products, kashrutCerts, orders, setOrders, currentUser, companySettings, customers, setCustomers, drivers, showToast }) {
+            const [cart, setCart] = useState([]);
+            return (
+                <div className="space-y-6 dir-rtl text-xs">
+                    <div className="bg-gradient-to-r from-wolt-600 to-wolt-500 rounded-3xl p-6 text-white shadow-md">
+                        <h2 className="text-2xl font-black">פורטל הזמנות B2B - {companySettings.companyName}</h2>
+                        <p className="font-bold mt-1">הזמנת נתחי בקר פרימיום טריים ישירות מול החברה</p>
+                    </div>
+
+                    <div className="grid grid-cols-1 md:grid-cols-3 gap-6">
+                        {products.map(p => (
+                            <div key={p.id} className="bg-white p-4 rounded-3xl border border-slate-200 shadow-sm">
+                                <img src={p.imageUrl} className="w-full h-36 object-cover rounded-2xl mb-3" />
+                                <h4 className="font-black text-slate-900 text-sm">{p.name}</h4>
+                                <div className="mt-2 flex justify-between items-center">
+                                    <span className="font-mono font-black text-wolt-600">₪{p.isOnSale ? p.salePricePerKg : p.pricePerKg} / ק"ג</span>
+                                    <button onClick={() => showToast('מוצר נוסף לסל')} className="bg-wolt-500 text-white font-black px-3 py-1.5 rounded-xl">
+                                        + הוסף לסל
+                                    </button>
+                                </div>
+                            </div>
+                        ))}
+                    </div>
+                </div>
+            );
+        }
+
+        function SettingsModal({ settings, onSave, onClose }) {
+            const [companyName, setCompanyName] = useState(settings.companyName);
+            const [whatsappPhone, setWhatsappPhone] = useState(settings.whatsappPhone);
+            return (
+                <div className="fixed inset-0 z-50 bg-slate-900/70 backdrop-blur-xs flex items-center justify-center p-4 dir-rtl text-xs">
+                    <div className="bg-white rounded-3xl max-w-md w-full p-6 space-y-4 shadow-2xl relative">
+                        <button onClick={onClose} className="absolute top-4 left-4 p-2 bg-slate-100 hover:bg-slate-200 text-slate-700 rounded-full font-bold">✕</button>
+                        <h3 className="font-black text-slate-900 text-lg">הגדרות מותג וחברה</h3>
+                        <div className="space-y-3">
+                            <input type="text" value={companyName} onChange={e => setCompanyName(e.target.value)} className="w-full border p-2.5 rounded-xl font-bold" />
+                            <button onClick={() => { onSave({ ...settings, companyName }); }} className="w-full bg-wolt-500 text-white font-black py-2.5 rounded-xl">שמור שינויים</button>
+                        </div>
+                    </div>
+                </div>
+            );
+        }
+
+        // --- RENDER APPLICATION ---
+        const rootElement = document.getElementById('root');
+        if (rootElement) {
+            ReactDOM.createRoot(rootElement).render(<App />);
+        }
+    </script>
+</body>
+</html>
